@@ -13,6 +13,7 @@ namespace TestTaskForCRMGURU.EntitiesDB
     [Table(Name = "Country")]
     class Country
     {
+
         /// <summary>
         /// Первичный ключ.
         /// </summary>
@@ -74,9 +75,9 @@ namespace TestTaskForCRMGURU.EntitiesDB
         /// <returns></returns>
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var stringBuilder = new StringBuilder();
 
-            sb.Append(Name).
+            stringBuilder.Append(Name).
                Append(" ").
                Append(Code).
                Append(" ");
@@ -85,12 +86,12 @@ namespace TestTaskForCRMGURU.EntitiesDB
             {
                 foreach (var el in Cities)
                 {
-                    sb.Append(el.Name).
+                    stringBuilder.Append(el.Name).
                        Append(" ");
                 }
             }
 
-            sb.Append(Area).
+            stringBuilder.Append(Area).
                Append(" ").
                Append(Population).
                Append(" ");
@@ -99,12 +100,12 @@ namespace TestTaskForCRMGURU.EntitiesDB
             {
                 foreach (var el in Regions)
                 {
-                    sb.Append(el.Name).
+                    stringBuilder.Append(el.Name).
                        Append(" ");
                 }
             }
 
-            return sb.ToString();
+            return stringBuilder.ToString();
         }
     }
 }

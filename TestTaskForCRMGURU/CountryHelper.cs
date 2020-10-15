@@ -13,12 +13,12 @@ namespace TestTaskForCRMGURU
     /// <summary>
     /// Работа с базой данных.
     /// </summary>
-    class WorkWithDB
+    class CountryHelper
     {
         /// <summary>
         /// Создает объект.
         /// </summary>
-        public WorkWithDB()
+        public CountryHelper()
         {
         }
 
@@ -32,7 +32,7 @@ namespace TestTaskForCRMGURU
 
             try
             {
-                using (var data = new ConnectToDb())
+                using (var data = new ConnectToDataBase())
                 {
                     var countries = data.Country.
                         LoadWith(x => x.Regions).
@@ -41,29 +41,24 @@ namespace TestTaskForCRMGURU
                     return countries.ToList();
                 }
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                throw new Exception("При выводе стран произошла ошибка.", ex);
+                throw new Exception("При выводе стран произошла ошибка.", exception);
             }
 
         }
 
         /// <summary>
-        /// Вставка Странны в бд.
+        /// Вставка странны в бд.
         /// </summary>
-        /// <param name="name"> Название страны.</param>
-        /// <param name="capital"> Название столицы.</param>
-        /// <param name="region"> Название региона.</param>
-        /// <param name="code"> Код региона.</param>
-        /// <param name="popultion"> Численность населения.</param>
-        /// <param name="area"> Площадь.</param>
-        public void InsertCountry(string name, string capital, string region, string code, int popultion, float area)
+        /// <param name="informationAboutContry"> Информация о стране.</param>
+        public void InsertCountry(InformationAboutContry informationAboutContry)
         {
-            var capitalGuid = CheckDuplicateCapital(capital);
-            var regionGuid = CheckDuplicateRegion(region);
-            var countryGuid = CheckDuplicateCountry(code);
+            var capitalGuid = CheckDuplicateCapital(informationAboutContry.Capital);
+            var regionGuid = CheckDuplicateRegion(informationAboutContry.Region);
+            var countryGuid = CheckDuplicateCountry(informationAboutContry.Alpha2Code);
 
-            using (var data = new ConnectToDb())
+            using (var data = new ConnectToDataBase())
             {
                 try
                 {
@@ -71,7 +66,7 @@ namespace TestTaskForCRMGURU
                     {
                         data.City.
                         Value(x => x.CityId, capitalGuid.Item1).
-                        Value(x => x.Name, capital).
+                        Value(x => x.Name, informationAboutContry.Capital).
                         Insert();
                     }
 
@@ -79,7 +74,7 @@ namespace TestTaskForCRMGURU
                     {
                         data.Region.
                         Value(x => x.RegionId, regionGuid.Item1).
-                        Value(x => x.Name, region).
+                        Value(x => x.Name, informationAboutContry.Region).
                         Insert();
                     }
 
@@ -88,30 +83,31 @@ namespace TestTaskForCRMGURU
                         data.Country.
                         Value(x => x.CountryId, countryGuid.Item1).
                         Value(x => x.CapitalId, capitalGuid.Item1).
-                        Value(x => x.Name, name).
+                        Value(x => x.Name, informationAboutContry.Name).
                         Value(x => x.RegionId, regionGuid.Item1).
-                        Value(x => x.Code, code).
-                        Value(x => x.Population, popultion).
-                        Value(x => x.Area, area).
+                        Value(x => x.Code, informationAboutContry.Alpha2Code).
+                        Value(x => x.Population, informationAboutContry.Population).
+                        Value(x => x.Area, informationAboutContry.Area).
                         Insert();
                     }
                     else
                     {
-                        UpdateCountry(regionGuid.Item1, capitalGuid.Item1, countryGuid.Item1, name, capital, region, code, popultion, area);
+                        UpdateCountry(regionGuid.Item1, capitalGuid.Item1, countryGuid.Item1, informationAboutContry.Name,
+                            informationAboutContry.Capital, informationAboutContry.Region, informationAboutContry.Alpha2Code,
+                            informationAboutContry.Population, informationAboutContry.Area);
                     }
                 }
-                catch (Exception e)
+                catch (Exception exception)
                 {
-
-                    throw new Exception("При вставке произошла ошибка.", e);
+                    throw new Exception("При вставке произошла ошибка.", exception);
                 }
             }
         }
 
-        private void  UpdateCountry(Guid regionGuid,Guid capitalGuid, Guid countryId,string name, 
+        private void UpdateCountry(Guid regionGuid, Guid capitalGuid, Guid countryId, string name,
             string capital, string region, string code, int popultion, float area)
         {
-            using (var data = new ConnectToDb())
+            using (var data = new ConnectToDataBase())
             {
                 data.Country.
                     Where(x => x.Code == code).
@@ -128,7 +124,7 @@ namespace TestTaskForCRMGURU
 
         private IEnumerable<City> GetCapital()
         {
-            using (var data = new ConnectToDb())
+            using (var data = new ConnectToDataBase())
             {
                 var country = data.City.
                     ToList();
@@ -138,7 +134,7 @@ namespace TestTaskForCRMGURU
 
         private IEnumerable<Region> GetRegion()
         {
-            using (var data = new ConnectToDb())
+            using (var data = new ConnectToDataBase())
             {
                 var region = data.Region.
                     ToList();
@@ -148,7 +144,7 @@ namespace TestTaskForCRMGURU
 
         private IEnumerable<Country> GetCountry()
         {
-            using (var data = new ConnectToDb())
+            using (var data = new ConnectToDataBase())
             {
                 var country = data.Country.
                     ToList();
@@ -156,37 +152,36 @@ namespace TestTaskForCRMGURU
             }
         }
 
-        private (Guid, bool) CheckDuplicateCapital(string str)
+        private (Guid, bool) CheckDuplicateCapital(string capital)
         {
-            foreach (var el in GetCapital())
+            foreach (var element in GetCapital())
             {
-                if (el.Name.Equals(str))
+                if (element.Name.Equals(capital))
                 {
-                    return (el.CityId, false);
+                    return (element.CityId, false);
                 }
             }
 
             return (Guid.NewGuid(), true);
         }
 
-        private (Guid, bool) CheckDuplicateRegion(string str)
+        private (Guid, bool) CheckDuplicateRegion(string region)
         {
-            foreach (var el in GetRegion())
+            foreach (var element in GetRegion())
             {
-                if (el.Name.Equals(str))
+                if (element.Name.Equals(region))
                 {
-                    return (el.RegionId, false);
+                    return (element.RegionId, false);
                 }
             }
             return (Guid.NewGuid(), true);
         }
 
-        private (Guid, bool) CheckDuplicateCountry(string str)
+        private (Guid, bool) CheckDuplicateCountry(string country)
         {
             foreach (var el in GetCountry())
             {
-                if (el.Code.Equals(str))
-
+                if (el.Code.Equals(country))
                 {
                     return (el.CountryId, false);
                 }

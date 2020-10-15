@@ -12,12 +12,12 @@ namespace TestTaskForCRMGURU
     /// <summary>
 	/// Подключение к базе данных.
 	/// </summary>
-    class ConnectToDb : DataConnection
+    class ConnectToDataBase : DataConnection
     {
 		/// <summary>
 		/// Создает объект.
 		/// </summary>
-		public ConnectToDb() : base("Country") { }
+		public ConnectToDataBase() : base("Country") { }
 
 		/// <summary>
 		/// Возвращает таблицу Region.

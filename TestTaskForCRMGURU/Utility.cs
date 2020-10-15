@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LinqToDB.Common;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,11 +7,12 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using TestTaskForCRMGURU.EntitiesDB;
 
 namespace TestTaskForCRMGURU
 {
     /// <summary>
-	/// Вызов реализованных методов.
+	/// Вызов реализованных методов.    
 	/// </summary>
     class Utility
     {
@@ -28,61 +30,86 @@ namespace TestTaskForCRMGURU
         {
             try
             {
-                Console.WriteLine("Выберите действие \n Ввод странны - 1 \n Получение списка стран - 2.");
+                Console.WriteLine("Выберите действие \n Ввод страны - y \n Получение списка стран - нажмите любую клавишу.");
 
-                var action = Convert.ToInt32(Console.ReadLine());
+                var action = Console.ReadLine();
 
-                if (action == 1)
+                if (action.Equals("y"))
                 {
-                    Console.WriteLine("Введите название страны.");
-
-                    var country = Console.ReadLine();
+                    var country = GetInputContry();
 
                     PrintInfoAboutContry(country);
 
-                    Console.WriteLine("Сохранить странну в базу данных? \n 1 - Да \n 2 - Нет.");
+                    Console.WriteLine("Сохранить страну в базу данных? \n y - Да \n Для завершение программы нажмите любую клавишу");
 
-                    var answer = Convert.ToInt32(Console.ReadLine());
+                    var answer = Console.ReadLine();
 
-                    if (answer==1)
+                    if (answer.Equals("y"))
                     {
-                        GetDataAndInsertCountry(country);
+                        SaveCountryToDB(country);
                     }
-                }
-                else if (action == 2)
-                {
-                    var db = new WorkWithDB();
-
-                    foreach (var el in db.GetCountries())
+                    else
                     {
-                        Console.WriteLine($"{el}");
+                        Environment.Exit(0);
                     }
                 }
                 else
                 {
-                    throw new Exception("Выберите действие 1 или 2.");
+                    GetListCountries();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw new Exception("Для ввода доступны только числа (1,2)", ex);
+                throw;
             }
+        }
+
+        /// <summary>
+        /// Возвращает название страны.
+        /// </summary>
+        /// <returns></returns>
+        private static string GetInputContry()
+        {
+            Console.WriteLine("Введите название страны.");
+            var country = Console.ReadLine();
+
+            return country;
+        }
+
+        /// <summary>
+        /// Вовзвращает список стран.
+        /// </summary>
+        private static void GetListCountries()
+        {
+            var data = new CountryHelper();
+
+            foreach (var country in data.GetCountries())
+            {
+                Console.WriteLine($"{country}");
+            }
+        }
+
+        /// <summary>
+        /// Сохранение страны в бд.
+        /// </summary>
+        /// <param name="country"> Название страны.</param>
+        private static void SaveCountryToDB(string country)
+        {
+            InsertCountry(GetDataCountry(country));
         }
 
         /// <summary>
         /// Получение ответа от API.
         /// </summary>
-        /// <param name="country"> Страна</param>
+        /// <param name="countryName"> Название страны. </param>
         /// <returns> Коллекция объектов страны.</returns>
-        private static List<InformationAboutContry> GetWebResponse(string country)
+        private static List<InformationAboutContry> GetWebResponse(string countryName)
         {
             try
             {
-                var url = "https://restcountries.eu/rest/v2/name/" + country;
-
+                var url = "https://restcountries.eu/rest/v2/name/" + countryName;
                 var webRequest = HttpWebRequest.Create(url);
                 var webResponse = webRequest.GetResponse();
-
                 var response = "";
 
                 using (var streamReader = new StreamReader(webResponse.GetResponseStream()))
@@ -90,20 +117,19 @@ namespace TestTaskForCRMGURU
                     response = streamReader.ReadToEnd();
                 }
 
-                var apiCountry = JsonConvert.DeserializeObject<List<InformationAboutContry>>(response);
-
-                return apiCountry;
+                var country = JsonConvert.DeserializeObject<List<InformationAboutContry>>(response);
+                return country;
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                throw new Exception("Странна не найденна.", ex);
+                throw new Exception("Страна не найденна.", exception);
             }
         }
 
         /// <summary>
         /// Вывод информации о выбранной стране.
         /// </summary>
-        /// <param name="country"> Страна.</param>
+        /// <param name="country"> Название страны.</param>
         private static void PrintInfoAboutContry(string country)
         {
             var data = GetWebResponse(country);
@@ -115,28 +141,45 @@ namespace TestTaskForCRMGURU
         }
 
         /// <summary>
-        /// Получение информации о стране и вставка ее в бд.
+        /// Вставка странны в бд.
+        /// </summary>
+        /// <param name="country"> Название страны.</param>
+        private static void InsertCountry(InformationAboutContry country)
+        {
+            try
+            {
+                var workWithDB = new CountryHelper();
+                workWithDB.InsertCountry(country);
+
+                Console.WriteLine("Страна успешно сохраненна.");
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("При сохранении страны произошла ошибка.", exception);
+            }
+        }
+
+        /// <summary>
+        /// Получение информации о стране.
         /// </summary>
         /// <param name="country"> Страна.</param>
-        private static void GetDataAndInsertCountry(string country)
+        /// <returns> Страна.</returns>
+        private static InformationAboutContry GetDataCountry(string country)
         {
             var data = GetWebResponse(country);
 
-            foreach (var el in data)
+            foreach (var element in data)
             {
-                var name = el.Name;
-                var code = el.Alpha2Code;
-                var capital = el.Capital;
-                var region = el.Region;
-                var population = el.Population;
-                var area = el.Area;
+                var name = element.Name;
+                var code = element.Alpha2Code;
+                var capital = element.Capital;
+                var region = element.Region;
+                var population = element.Population;
+                var area = element.Area;
 
-                WorkWithDB workWithDB = new WorkWithDB();
-
-                workWithDB.InsertCountry(name, capital, region, code, population, area);
+                return new InformationAboutContry(name, code, capital, region, population, area);
             }
-
-            Console.WriteLine("Страна успешно сохраненна.");
+            return null;
         }
     }
 }

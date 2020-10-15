@@ -12,6 +12,25 @@ namespace TestTaskForCRMGURU
     class InformationAboutContry
     {
         /// <summary>
+        /// Объект.
+        /// </summary>
+        /// <param name="name"> Название страны.</param>
+        /// <param name="alpha2Code"> Код страны.</param>
+        /// <param name="capital"> Название столицы.</param>
+        /// <param name="region"> Название Регион.</param>
+        /// <param name="population"> Численность населения.</param>
+        /// <param name="area"> Площадь.</param>
+        public InformationAboutContry(string name, string alpha2Code, string capital, string region, int population, float area)
+        {
+            Name = name;
+            Alpha2Code = alpha2Code;
+            Capital = capital;
+            Region = region;
+            Population = population;
+            Area = area;
+        }
+
+        /// <summary>
         /// Название страны.
         /// </summary>
         public string Name { get; set; }
